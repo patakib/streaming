@@ -30,3 +30,9 @@ MYSQL_DATABASE=...
 
 3. Turn down the whole infrastructure:  
 `docker compose down --rmi all -v`
+
+## Inspiration
+You can build a streaming data pipeline on top of this data flow.
+
+One use case can be to install Kafka and Kafka MySQL Connector and connect it to the source MariaDB.
+Then you can land the data in a destination or analyze it in Apache Spark with Spark Streaming.
