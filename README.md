@@ -12,6 +12,9 @@ The data is related to workouts that users register in the system, similar to fi
 
 The data is flowing into a MariaDB in two tables: user and activity.
 
+## Prerequisities
+Docker and Docker Compose.
+
 ## Quickstart
 
 1. Create a .env file with the name of local.env and register the following secrets:
