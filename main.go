@@ -1,8 +1,8 @@
 package main
 
 import (
-	//"fmt"
 	"database/sql"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -10,14 +10,16 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 var wg sync.WaitGroup
 
-type fn func()
+type fn func(user, pass, port, database string)
 
-func initDb() {
-	db, err := sql.Open("mysql", "streamuser:streampass@tcp(127.0.0.1:3306)/streaming")
+func initDb(user, pass, port, database string) {
+	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
 		log.Fatal()
@@ -37,7 +39,7 @@ func initDb() {
 		log.Fatal()
 	}
 	for i := 1; i <= 1000; i++ {
-		createUser()
+		createUser(user, pass, port, database)
 	}
 
 	activityCreationSql := "CREATE OR REPLACE TABLE activity (id INT NOT NULL AUTO_INCREMENT, user_id INT, activity_type VARCHAR(50), intensity INT, duration INT, PRIMARY KEY(id), CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE)"
@@ -46,8 +48,9 @@ func initDb() {
 	}
 }
 
-func createUser() {
-	db, err := sql.Open("mysql", "streamuser:streampass@tcp(127.0.0.1:3306)/streaming")
+func createUser(user, pass, port, database string) {
+	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
 		log.Fatal()
@@ -75,8 +78,9 @@ func createUser() {
 	log.Println("New user added.")
 }
 
-func deleteUser() {
-	db, err := sql.Open("mysql", "streamuser:streampass@tcp(127.0.0.1:3306)/streaming")
+func deleteUser(user, pass, port, database string) {
+	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
 		log.Fatal()
@@ -105,8 +109,9 @@ func deleteUser() {
 	log.Printf("Deleted user: %v", userId+1)
 }
 
-func createActivity() {
-	db, err := sql.Open("mysql", "streamuser:streampass@tcp(127.0.0.1:3306)/streaming")
+func createActivity(user, pass, port, database string) {
+	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
 		log.Fatal()
@@ -148,12 +153,12 @@ func createActivity() {
 	}
 }
 
-func postMessage(event fn, randomRange int) {
+func postMessage(event fn, randomRange int, user, pass, port, database string) {
 	defer wg.Done()
 	for {
 		rand.Seed(time.Now().UnixNano())
 		r := rand.Intn(randomRange)
-		go event()
+		go event(user, pass, port, database)
 		time.Sleep(time.Duration(r) * time.Microsecond)
 	}
 }
@@ -165,13 +170,22 @@ func main() {
 	}
 	log.SetOutput(logFile)
 
-	initDb()
+	err2 := godotenv.Load("local.env")
+	if err2 != nil {
+		log.Fatal()
+	}
+	db_user := os.Getenv("MYSQL_USER")
+	db_pass := os.Getenv("MYSQL_PASS")
+	db_port := os.Getenv("MYSQL_PORT")
+	db_database := os.Getenv("MYSQL_DATABASE")
+
+	initDb(db_user, db_pass, db_port, db_database)
 	wg.Add(111)
 	for i := 1; i <= 100; i++ {
-		go postMessage(createActivity, 100000000)
+		go postMessage(createActivity, 100000000, db_user, db_pass, db_port, db_database)
 	}
 	for j := 1; j <= 10; j++ {
-		go postMessage(createUser, 1000000000)
+		go postMessage(createUser, 1000000000, db_user, db_pass, db_port, db_database)
 	}
 	wg.Wait()
 }
