@@ -1,15 +1,31 @@
 version: '3'
+
 volumes:
   data:
+
 services:
   db:
     image: mariadb:latest
     environment:
-      MYSQL_ROOT_PASSWORD: str34m
-      MYSQL_DATABASE: streaming
-      MYSQL_USER: streamuser
-      MYSQL_PASSWORD: streampass
+      MYSQL_ROOT_PASSWORD: "${MYSQL_DATABASE}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASS}"
     volumes:
       - data:/var/lib/mysql
     ports:
       - "3306:3306"
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+    depends_on:
+      - db
+    command: ["./wait-for-it.sh", "db:${MYSQL_PORT}", "--", "./streamingapp"]
+
+networks:
+  default:
+    name: streamNet

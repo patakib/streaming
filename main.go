@@ -18,7 +18,7 @@ var wg sync.WaitGroup
 type fn func(user, pass, port, database string)
 
 func initDb(user, pass, port, database string) {
-	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	conn := fmt.Sprintf("%s:%s@tcp(db:%s)/%s", user, pass, port, database)
 	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
@@ -49,7 +49,7 @@ func initDb(user, pass, port, database string) {
 }
 
 func createUser(user, pass, port, database string) {
-	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	conn := fmt.Sprintf("%s:%s@tcp(db:%s)/%s", user, pass, port, database)
 	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
@@ -79,7 +79,7 @@ func createUser(user, pass, port, database string) {
 }
 
 func deleteUser(user, pass, port, database string) {
-	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	conn := fmt.Sprintf("%s:%s@tcp(db:%s)/%s", user, pass, port, database)
 	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
@@ -110,7 +110,7 @@ func deleteUser(user, pass, port, database string) {
 }
 
 func createActivity(user, pass, port, database string) {
-	conn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", user, pass, port, database)
+	conn := fmt.Sprintf("%s:%s@tcp(db:%s)/%s", user, pass, port, database)
 	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
@@ -180,7 +180,7 @@ func main() {
 	db_database := os.Getenv("MYSQL_DATABASE")
 
 	initDb(db_user, db_pass, db_port, db_database)
-	wg.Add(111)
+	wg.Add(110)
 	for i := 1; i <= 100; i++ {
 		go postMessage(createActivity, 100000000, db_user, db_pass, db_port, db_database)
 	}
