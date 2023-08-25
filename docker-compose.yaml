@@ -1,21 +1,29 @@
 version: '3'
 
 volumes:
-  data:
+  mysql-data:
+    driver: local
+  mysql-log:
+    driver: local
+  mysql-conf:
+    driver: local
 
 services:
   db:
-    image: mariadb:latest
+    image: mariadb:10.11
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_DATABASE}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASS}"
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASS}
     volumes:
-      - data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+      - mysql-log:/var/log/mysql
+      - mysql-conf:/etc/mysql/conf.d
+      - ./50-server.cnf:/etc/mysql/mariadb.conf.d/50-server.cnf
     ports:
       - "3306:3306"
-
+  
   app:
     build: 
       context: .
@@ -27,26 +35,19 @@ services:
     command: ["./wait-for-it.sh", "db:${MYSQL_PORT}", "--", "./streamingapp"]
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+    image: quay.io/debezium/zookeeper
     ports:
-      - 22181:2181
-  
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
   kafka:
-    image: confluentinc/cp-kafka:latest
-    depends_on:
-      - zookeeper
+    image: quay.io/debezium/kafka
     ports:
-      - 29092:29092
+     - 9092:9092
+    links:
+     - zookeeper
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+     - ZOOKEEPER_CONNECT=zookeeper:2181
   
   kafka-connect:
     image: quay.io/debezium/connect

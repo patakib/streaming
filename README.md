@@ -28,7 +28,28 @@ MYSQL_DATABASE=...
 2. Start the application and the database in Docker:  
 `docker compose --env-file local.env up -d`
 
-3. Turn down the whole infrastructure:  
+3. Add new MariaDB user with privileges:
+- login to mariadb with root user:
+```
+mysql -uroot -p{MYSQL_ROOT_PASSWORD}
+```
+
+- add new user:
+```
+CREATE USER '{YOUR_NEW_USER}'@'localhost' IDENTIFIED BY '{YOUR_NEW_PASSWORD}';
+```
+
+- add privileges:
+```
+GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '{YOUR_NEW_USER}' IDENTIFIED BY '{YOUR_NEW_PASSWORD}';
+```
+
+4. Register MySQL connector in the terminal:
+```
+curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d '{ "name": "${CONNECTOR_NAME}", "config": { "connector.class": "io.debezium.connector.mysql.MySqlConnector", "tasks.max": "1", "database.hostname": "db", "database.port": "3306", "database.user": "${YOUR_NEW_USER}", "database.password": "${YOUR_NEW_PASSWORD}", "database.server.id": "184054", "topic.prefix": "${SERVER_NAME}", "database.include.list": "streaming", "schema.history.internal.kafka.bootstrap.servers": "kafka:9092", "schema.history.internal.kafka.topic": "schemahistory.streaming" } }'
+```
+
+4. Turn down the whole infrastructure:  
 `docker compose down --rmi all -v`
 
 ## Inspiration
