@@ -30,7 +30,7 @@ MYSQL_DATABASE=...
 
 3. Add new MariaDB user with privileges:
 - login to the mariadb container shell:  
-`docker exec -it {MARIADB_CONTAINER_ID} sh
+`docker exec -it {MARIADB_CONTAINER_ID} sh`  
 
 - login to mariadb with root user:
 ```
