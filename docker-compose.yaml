@@ -7,6 +7,7 @@ volumes:
     driver: local
   mysql-conf:
     driver: local
+  mongodb_data_container:
 
 services:
   db:
@@ -64,6 +65,28 @@ services:
       CONFIG_STORAGE_TOPIC: my_connect_configs
       OFFSET_STORAGE_TOPIC: my_connect_offsets
       STATUS_STORAGE_TOPIC: my_connect_statuses
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment: 
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASS}
+        - POSTGRES_DB=${POSTGRES_DB}  
+    ports: 
+        - "5431:5432"
+    volumes: 
+        - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
 
 networks:
   default:

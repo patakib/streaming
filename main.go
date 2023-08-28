@@ -181,11 +181,11 @@ func main() {
 
 	initDb(db_user, db_pass, db_port, db_database)
 	wg.Add(110)
-	for i := 1; i <= 100; i++ {
+	for i := 1; i <= 50; i++ {
 		go postMessage(createActivity, 100000000, db_user, db_pass, db_port, db_database)
 	}
-	for j := 1; j <= 10; j++ {
-		go postMessage(createUser, 1000000000, db_user, db_pass, db_port, db_database)
+	for j := 1; j <= 100; j++ {
+		go postMessage(createUser, 100000000, db_user, db_pass, db_port, db_database)
 	}
 	wg.Wait()
 }

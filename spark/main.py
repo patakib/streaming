@@ -12,13 +12,26 @@ spark = SparkSession \
     .builder \
     .appName("streamingWithSparkAndKafka") \
     .config("spark.streaming.stopGracefullyOnShutdown", True) \
+    .config("spark.jars", "./postgresql-42.6.0.jar") \
     .master("local[*]") \
     .getOrCreate()
     
 spark.sparkContext.setLogLevel("ERROR")
 
-KAFKA_TOPIC_01 = "streamingserver.streaming.activity"
+KAFKA_TOPIC_01 = "streamingserver.streaming.user"
+KAFKA_TOPIC_02 = "streamingserver.streaming.activity"
 KAFKA_SERVER = "localhost:9092"
+
+user_schema = StructType([
+        StructField("payload", StructType([
+            StructField("after", StructType([
+                StructField("id", IntegerType()),
+                StructField("birth_year", IntegerType()),
+                StructField("location", StringType()),
+                StructField("gender", StringType())
+            ]), True)
+        ]))
+    ])
 
 activity_schema = StructType([
         StructField("payload", StructType([
@@ -32,15 +45,44 @@ activity_schema = StructType([
         ]))
     ])
 
-activities = spark.readStream \
+users = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", KAFKA_SERVER) \
     .option("subscribe", KAFKA_TOPIC_01) \
     .option("startingOffsets", "earliest") \
     .load() \
-    .withColumn("value", from_json(col("value").cast("string"), activity_schema)) \
+    .withColumn("value", from_json(col("value").cast("string"), user_schema)) \
     .select("value.payload.after.*")
 
-activities.printSchema()
+activities = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", KAFKA_SERVER) \
+    .option("subscribe", KAFKA_TOPIC_02) \
+    .option("startingOffsets", "earliest") \
+    .load() \
+    .withColumn("value", from_json(col("value").cast("string"), activity_schema)) \
+    .select("value.payload.after.*")
+activities = activities.withColumnRenamed("id", "activity_id")
 
-df = activities.writeStream.format("console").outputMode("append").start().awaitTermination()
+activities.printSchema()
+users.printSchema()
+
+df = users.join(activities, users.id == activities.user_id, 'inner')
+df = df.select("user_id", "activity_id", "birth_year", "location", "gender", "activity_type", "intensity", "duration")
+#df = df.writeStream.format("console").outputMode("append").start().awaitTermination()
+
+def write_stream_to_postgres(dataframe, epoch_id) -> None:
+    dataframe.write \
+    .mode("append") \
+    .format("jdbc") \
+    .option("url", "jdbc:postgresql://localhost:5431/streaming") \
+    .option("driver", "org.postgresql.Driver") \
+    .option("dbtable", "user_activity") \
+    .option("user", "streamuser") \
+    .option("password", "streampass") \
+    .save()
+
+df.writeStream \
+    .foreachBatch(write_stream_to_postgres) \
+    .start() \
+    .awaitTermination()
