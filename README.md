@@ -29,6 +29,9 @@ MYSQL_DATABASE=...
 `docker compose --env-file local.env up -d`
 
 3. Add new MariaDB user with privileges:
+- login to the mariadb container shell:  
+`docker exec -it {MARIADB_CONTAINER_ID} sh
+
 - login to mariadb with root user:
 ```
 mysql -uroot -p{MYSQL_ROOT_PASSWORD}
@@ -49,11 +52,16 @@ GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d '{ "name": "${CONNECTOR_NAME}", "config": { "connector.class": "io.debezium.connector.mysql.MySqlConnector", "tasks.max": "1", "database.hostname": "db", "database.port": "3306", "database.user": "${YOUR_NEW_USER}", "database.password": "${YOUR_NEW_PASSWORD}", "database.server.id": "184054", "topic.prefix": "${SERVER_NAME}", "database.include.list": "streaming", "schema.history.internal.kafka.bootstrap.servers": "kafka:9092", "schema.history.internal.kafka.topic": "schemahistory.streaming" } }'
 ```
 
-4. Turn down the whole infrastructure:  
+5. Install Spark
+
+6. Install Python requirements:
+- Go to ./spark folder  
+- Create a virtual environment: `python3 -m venv venv`  
+- Activate the environment: `source venv/bin/activate`  
+- Install dependencies: `pip install requirements.txt`  
+
+7. Run Spark streaming:
+`python3 main.py`
+
+8. Turn down the whole infrastructure:  
 `docker compose down --rmi all -v`
-
-## Inspiration
-You can build a streaming data pipeline on top of this data flow.
-
-One use case can be to install Kafka and Kafka MySQL Connector and connect it to the source MariaDB.
-Then you can land the data in a destination or analyze it in Apache Spark with Spark Streaming.
