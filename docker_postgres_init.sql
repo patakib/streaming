@@ -9,3 +9,12 @@ CREATE TABLE user_activity
     intensity INT,
     duration INT
 );
+
+CREATE TABLE city_stats
+(
+    city VARCHAR(100) NOT NULL,
+    popular_sport VARCHAR(100) NOT NULL,
+    popular_sport_count INT,
+    most_active_user INT,
+    most_active_user_activity_count INT
+);

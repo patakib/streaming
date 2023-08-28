@@ -69,7 +69,6 @@ users.printSchema()
 
 df = users.join(activities, users.id == activities.user_id, 'inner')
 df = df.select("user_id", "activity_id", "birth_year", "location", "gender", "activity_type", "intensity", "duration")
-#df = df.writeStream.format("console").outputMode("append").start().awaitTermination()
 
 def write_stream_to_postgres(dataframe, epoch_id) -> None:
     dataframe.write \
