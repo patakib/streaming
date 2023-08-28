@@ -17,28 +17,30 @@ spark = SparkSession \
     
 spark.sparkContext.setLogLevel("ERROR")
 
-KAFKA_TOPIC_01 = "streamingdbserver.streaming.activity"
+KAFKA_TOPIC_01 = "streamingserver.streaming.activity"
 KAFKA_SERVER = "localhost:9092"
+
+activity_schema = StructType([
+        StructField("payload", StructType([
+            StructField("after", StructType([
+                StructField("id", IntegerType()),
+                StructField("user_id", IntegerType()),
+                StructField("activity_type", StringType()),
+                StructField("intensity", IntegerType()),
+                StructField("duration", IntegerType())
+            ]), True)
+        ]))
+    ])
 
 activities = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", KAFKA_SERVER) \
     .option("subscribe", KAFKA_TOPIC_01) \
     .option("startingOffsets", "earliest") \
-    .load()
+    .load() \
+    .withColumn("value", from_json(col("value").cast("string"), activity_schema)) \
+    .select("value.payload.after.*")
 
-activity_schema = StructType([
-            StructField("id", IntegerType()),
-            StructField("user_id", IntegerType()),
-            StructField("activity_type", StringType()),
-            StructField("intensity", IntegerType()),
-            StructField("duration", IntegerType())
-        ])
+activities.printSchema()
 
-json_df = activities.selectExpr("cast(value as string) as value")
-json_expanded_df = json_df.withColumn("value", from_json(json_df["value"], activity_schema)).select("value.*")
-json_expanded_df.printSchema()
-
-selected_df = json_expanded_df.select("id", "user_id", "activity_type", "intensity", "duration")
-
-df = selected_df.writeStream.format("console").start().awaitTermination()
+df = activities.writeStream.format("console").outputMode("append").start().awaitTermination()
