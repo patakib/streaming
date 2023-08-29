@@ -65,7 +65,8 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
 - Install dependencies: `pip install requirements.txt`  
 
 7. Run Spark streaming:
-`python3 main.py`
+Edit the Spark files, add new ones, try it out!  
+Then run the file: `python3 {CHOSEN_SPARK_FILE}.py`
 
 8. Turn down the whole infrastructure:  
 `docker compose down --rmi all -v`
