@@ -42,7 +42,7 @@ func initDb(user, pass, port, database string) {
 		createUser(user, pass, port, database)
 	}
 
-	activityCreationSql := "CREATE OR REPLACE TABLE activity (id INT NOT NULL AUTO_INCREMENT, user_id INT, activity_type VARCHAR(50), intensity INT, duration INT, PRIMARY KEY(id), CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE)"
+	activityCreationSql := "CREATE OR REPLACE TABLE activity (id INT NOT NULL AUTO_INCREMENT, user_id INT, activity_type VARCHAR(50), intensity INT, duration INT, datetime DATETIME, PRIMARY KEY(id), CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE)"
 	if _, err := db.Exec(activityCreationSql); err != nil {
 		log.Fatal()
 	}
@@ -148,7 +148,9 @@ func createActivity(user, pass, port, database string) {
 	rand.Seed(time.Now().UnixNano())
 	duration := rand.Intn(120) + 15
 
-	if _, err := db.Exec("INSERT INTO activity(user_id, activity_type, intensity, duration) VALUES(?, ?, ?, ?)", userId+1, selectedActivityType, intensity, duration); err != nil {
+	datetime := time.Now().Format("2006-01-02 15:04:05")
+
+	if _, err := db.Exec("INSERT INTO activity(user_id, activity_type, intensity, duration, datetime) VALUES(?, ?, ?, ?, ?)", userId+1, selectedActivityType, intensity, duration, datetime); err != nil {
 		log.Fatal()
 	}
 }
@@ -180,7 +182,7 @@ func main() {
 	db_database := os.Getenv("MYSQL_DATABASE")
 
 	initDb(db_user, db_pass, db_port, db_database)
-	wg.Add(110)
+	wg.Add(160)
 	for i := 1; i <= 50; i++ {
 		go postMessage(createActivity, 100000000, db_user, db_pass, db_port, db_database)
 	}
