@@ -4,7 +4,12 @@ from pyspark.sql.types import *
 from pyspark.sql.functions import from_json
 
 import os
+import sys
+from dotenv import dotenv_values
 
+sys.path.append(os.path.abspath(os.path.join("..", "local.env")))
+env_path = sys.path[-1]
+config = dotenv_values(env_path)
 
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.2.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0 pyspark-shell'
 
@@ -74,11 +79,11 @@ def write_stream_to_postgres(dataframe, epoch_id) -> None:
     dataframe.write \
     .mode("append") \
     .format("jdbc") \
-    .option("url", "jdbc:postgresql://localhost:5431/streaming") \
+    .option("url", "jdbc:postgresql://localhost:5431/" + config["POSTGRES_DB"]) \
     .option("driver", "org.postgresql.Driver") \
     .option("dbtable", "user_activity") \
-    .option("user", "streamuser") \
-    .option("password", "streampass") \
+    .option("user", config["POSTGRES_USER"]) \
+    .option("password", config["POSTGRES_PASS"]) \
     .save()
 
 df.writeStream \
