@@ -38,7 +38,7 @@ func initDb(user, pass, port, database string) {
 	if _, err := db.Exec(userCreationSql); err != nil {
 		log.Fatal()
 	}
-	for i := 1; i <= 1000; i++ {
+	for i := 1; i <= 100000; i++ {
 		createUser(user, pass, port, database)
 	}
 
