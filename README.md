@@ -4,6 +4,10 @@
 Purpose of this application is to generate mock data for practicing streaming data pipelines.
 
 ## Architecture
+
+Overview of the Streaming Architecture:  
+(streaming_arch.png)
+
 The app which generates the data is written in Go.
 The Dockerfile is invoked in `docker-compose.yaml` file to build the image.
 
